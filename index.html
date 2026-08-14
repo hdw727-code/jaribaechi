@@ -513,21 +513,23 @@ body.present #exitPresent { display:inline-block; }
       </table>
       <button class="addbtn" onclick="addRows(1)">+ 학생 추가</button>
       <div class="hint" id="stuCount" style="margin-top:8px;"></div>
-      <div id="demoBox" style="display:none; margin-top:6px;">
-        <button class="minibtn" style="background:#dcfce7; color:#15803d;" onclick="demoFill()">🧪 예시 명단 24명으로 체험해보기</button>
+      <div id="emptyGuide" style="display:none; margin-top:8px; background:#f0f9ff; border:2px dashed #bae6fd; border-radius:12px; padding:14px 16px; color:#0369a1; font-size:.9rem; line-height:1.7;">
+        <b>📋 명단을 붙여넣어 시작하세요</b><br>
+        엑셀·한글·NEIS 표에서 <b>번호·이름·성별</b> 범위를 복사한 뒤,
+        위의 <b>[📋 엑셀 붙여넣기]</b> 버튼을 누르거나 <b>이름 칸에 바로 Ctrl+V</b> 하면 한 번에 채워집니다.
       </div>
     </div>
 
     <div class="card">
       <h2>🔴 떨어뜨릴 학생</h2>
-      <div class="hint">멀리 앉힐 학생들을 한 줄에 쉼표로 구분해 적고, 오른쪽에서 거리를 고릅니다. 예: 김철수, 이영희</div>
+      <div class="hint">멀리 앉힐 학생들을 한 줄에 쉼표로 구분해 적고, 오른쪽에서 거리를 고릅니다. (명단에 있는 이름 그대로)</div>
       <div id="sepBody"></div>
       <button class="addbtn" style="background:#fee2e2; color:#b91c1c;" onclick="addRel('sep')">+ 떨어뜨릴 그룹 추가</button>
     </div>
 
     <div class="card">
       <h2>🟢 붙일 학생 (짝 · 모둠)</h2>
-      <div class="hint">가까이 앉힐 학생들을 한 줄에 쉼표로 구분해 적습니다. 예: 강지민, 손흥민</div>
+      <div class="hint">가까이 앉힐 학생들을 한 줄에 쉼표로 구분해 적습니다. (명단에 있는 이름 그대로)</div>
       <div id="togBody"></div>
       <button class="addbtn" style="background:#dcfce7; color:#15803d;" onclick="addRel('tog')">+ 붙일 그룹 추가</button>
     </div>
@@ -558,7 +560,7 @@ body.present #exitPresent { display:inline-block; }
   <div class="modal">
     <h3>📋 엑셀 · 명단 붙여넣기</h3>
     <div class="cur">번호 / 이름 / 성별 / 고정좌석 열을 자동 인식합니다.<br>이름만 한 줄에 하나씩 넣어도 됩니다.</div>
-    <textarea id="pasteArea" rows="10" placeholder="1&#9;김철수&#9;남&#10;2&#9;이영희&#9;여&#9;1-3&#10;3&#9;박민수&#9;남"></textarea>
+    <textarea id="pasteArea" rows="10" placeholder="1&#9;학생1&#9;남&#10;2&#9;학생2&#9;여&#9;1-3&#10;3&#9;학생3&#9;남"></textarea>
     <label class="switch" style="margin-top:10px;"><input type="checkbox" id="pasteReplace" checked> 기존 명단을 지우고 새로 넣기</label>
     <button class="mbtn primary" onclick="applyPaste()">✅ 명단에 넣기</button>
     <button class="mbtn cancel" onclick="closePaste()">취소</button>
@@ -608,7 +610,7 @@ let UI = { mode:'all', drawn:false, assign:{}, shown:{}, queue:[], qi:0, spinnin
 
 function uid(){ return 'c' + Date.now().toString(36) + Math.floor(Math.random()*1e4).toString(36); }
 function blankClass(name){
-  return { id:uid(), schoolName:'', className:name||'3학년 1반', rows:5, cols:6, groupSize:2,
+  return { id:uid(), schoolName:'', className:name||'우리 반', rows:5, cols:6, groupSize:2,
     boardPos:'앞', empties:[], pairMode:'자유', students:[], sep:[], tog:[],
     avoidSeat:true, avoidPartner:true, avoidRow:false, rounds:2,
     history:[], current:null, printMsg:'' };
@@ -961,7 +963,7 @@ function renderStudents(){
     + '<td><button class="xbtn" onclick="delStudent('+i+')">✕</button></td></tr>').join('');
   const all=namedStudents().length, abs=namedStudents().filter(s=>s.absent).length;
   $('stuCount').textContent = '총 '+all+'명'+(abs?' (결석 '+abs+'명)':'')+' · 사용 좌석 '+allSeats().length+'칸';
-  $('demoBox').style.display = all===0 ? 'block' : 'none';
+  $('emptyGuide').style.display = all===0 ? 'block' : 'none';
 }
 function renderRel(){
   const mk=(kind,arr)=>arr.map((g,i)=>{
@@ -969,7 +971,7 @@ function renderRel(){
     const lvl = kind==='sep' ? '<select onchange="relLevel(\''+kind+'\','+i+',this.value)">'
       + [[1,'살짝 (2칸)'],[2,'조금 (3칸)'],[3,'보통 (4칸)'],[4,'많이 (6칸)'],[5,'최대한 멀리']]
         .map(o=>'<option value="'+o[0]+'"'+(+g.level===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select>' : '';
-    return '<div class="relrow"><input type="text" value="'+esc(names)+'" oninput="relNames(\''+kind+'\','+i+',this.value)" placeholder="예: 김철수, 이영희">'
+    return '<div class="relrow"><input type="text" value="'+esc(names)+'" oninput="relNames(\''+kind+'\','+i+',this.value)" placeholder="명단의 이름을 쉼표로 구분">'
       + lvl + '<button class="xbtn" onclick="relDel(\''+kind+'\','+i+')">✕</button></div>';
   }).join('');
   $('sepBody').innerHTML = mk('sep', C.sep||[]);
@@ -1025,12 +1027,6 @@ function sortRoster(by){
 }
 function clearStudents(){ if(!confirm('학생 명단을 모두 지울까요?')) return; C.students=[]; save(); renderStudents(); renderStage(); }
 function clearHistory(){ if(!confirm('지난 배치 기록을 모두 지울까요?')) return; C.history=[]; save(); renderSetup(); renderStage(); toast('기록을 지웠습니다'); }
-function demoFill(){
-  const N=['김가온','이나윤','박다연','최라온','정마루','강바다','조사랑','윤아름','장하늘','임슬기','한별','오다솜',
-           '신도윤','권시우','황준서','안하준','송지호','류건우','전서준','고민준','문예준','배이안','백주원','허도현'];
-  C.students = N.map((n,i)=>({number:String(i+1),name:n,gender:i<12?'여':'남',care:'',fixed:'',absent:false}));
-  save(); renderStudents(); renderStage(); toast('🧪 예시 명단 24명을 넣었습니다');
-}
 function addRel(kind){ if(kind==='sep')(C.sep=C.sep||[]).push({names:[],level:5}); else (C.tog=C.tog||[]).push([]); save(); renderRel(); }
 function relNames(kind,i,v){ const n=v.split(',').map(s=>s.trim()).filter(Boolean);
   if(kind==='sep') C.sep[i].names=n; else C.tog[i]=n; save(); }
